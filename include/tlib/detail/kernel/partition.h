@@ -7,7 +7,7 @@
 
 namespace tlib::simd{
     
-    template<typename>
+    template<typename,typename>
     struct x86_partition;
 
 } // namespace tlib::simd
@@ -15,7 +15,7 @@ namespace tlib::simd{
 namespace tlib::simd{
     
     template<typename F>
-    struct x86_partition{
+    struct x86_partition<float,F>{
         using size_type = std::size_t;
         constexpr x86_partition() = default;
         

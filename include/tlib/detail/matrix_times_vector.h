@@ -11,7 +11,7 @@
 
 #include "tags.h"
 #include "cases.h"
-#include "kernel/x86_8x8.h"
+#include "kernel/x86.h"
 #include "kernel/partition.h"
 
 
@@ -170,7 +170,6 @@ void gemv_col_parallel(
 
 	}
 }
-
 
 /** \brief computes 2d-slice-times-vector
  *
@@ -366,11 +365,13 @@ inline void mtv(
 }
 
 
-template<typename Kernel = simd::x86_kernel<simd::col_major>, typename Partition = simd::x86_partition<simd::col_major>, typename SizeType>
-inline void block_mtv_col(float* c, SizeType const* nc, SizeType const* wc,
-	float const* a, SizeType const* na, SizeType const* wa,
-	float const* b, SizeType const* nb, SizeType const* wb,
-	Kernel ker = simd::x86_kernel<simd::col_major>{}, Partition par = simd::x86_partition<simd::col_major>{}
+template<typename Kernel, typename Partition, 
+	typename SizeType, typename ValueType
+>
+inline void block_mtv_col(ValueType* c, SizeType const* nc, SizeType const* wc,
+	ValueType const* a, SizeType const* na, SizeType const* wa,
+	ValueType const* b, SizeType const* nb, SizeType const* wb,
+	Kernel ker, Partition par
 ) noexcept
 {
 	auto ai = a;
