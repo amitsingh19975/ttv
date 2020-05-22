@@ -11,6 +11,8 @@
 
 #include "tags.h"
 #include "cases.h"
+#include "kernel/x86_8x8.h"
+#include "kernel/partition.h"
 
 
 // <cblas.h>
@@ -130,7 +132,7 @@ void gemv_col_parallel(
 		size_t const N,
 		size_t const lda)
 {
-	constexpr auto MB = 32;
+	constexpr auto MB = 256;
 	const unsigned m = M/MB;
 	const unsigned MBmod = M%MB;
 
@@ -363,6 +365,53 @@ inline void mtv(
 	
 }
 
+
+template<typename Kernel = simd::x86_kernel<simd::col_major>, typename Partition = simd::x86_partition<simd::col_major>, typename SizeType>
+inline void block_mtv_col(float* c, SizeType const* nc, SizeType const* wc,
+	float const* a, SizeType const* na, SizeType const* wa,
+	float const* b, SizeType const* nb, SizeType const* wb,
+	Kernel ker = simd::x86_kernel<simd::col_major>{}, Partition par = simd::x86_partition<simd::col_major>{}
+) noexcept
+{
+	auto ai = a;
+	auto bi = b;
+	auto ci = c;
+
+	auto const m = na[0];
+	auto const k = na[1];
+	
+	par(m,k,1);
+
+	auto const BM = par.M();
+	auto const BK = par.K();
+	#pragma omp parallel for schedule(dynamic)
+	for( auto i = 0ul; i < m; i += BM ){
+		auto const ib = std::min( m - i, BM );
+
+		auto ak = ai + i * wa[0];
+		auto bk = bi;
+		auto ck = ci + i * wc[0];
+
+		for( auto j = 0ul; j < k; j += BK ){
+			auto const jb = std::min( k - j, BK );
+			
+			SizeType const nta[] = {ib, jb};
+			SizeType const ntb[] = {jb, 1};
+			SizeType const ntc[] = {ib, 1};
+
+			ker(
+				ck, ntc, wc,
+				ak, nta, wa,
+				bk, ntb, wb
+			);
+
+			ak += wa[1] * jb;
+			bk += jb;
+		}
+
+	}
+
+}
 
 
 } // namespace tlib::detail
