@@ -68,7 +68,7 @@ namespace tlib::simd::x86{
                 detail::simd_config::avx512dq ||
                 detail::simd_config::avx512vl 
             ){
-                if( sz < d512 ){
+                if( sz <= d512 ){
                     if constexpr ( detail::simd_config::avx ||
                         detail::simd_config::avx2
                     ){
@@ -83,7 +83,7 @@ namespace tlib::simd::x86{
                 if constexpr ( detail::simd_config::avx ||
                     detail::simd_config::avx2
                 ){
-                    return sz < d256 ? d128 : d256;
+                    return sz <= d256 ? d128 : d256;
                 }else{
                     return d128;
                 }
