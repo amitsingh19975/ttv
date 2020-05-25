@@ -429,7 +429,7 @@ inline void block_mtv_row(ValueType* c, SizeType const* nc, SizeType const* wc,
 
 	auto const m = na[1];
 	auto const k = na[0];
-	
+
 	par(m,k,1);
 	auto const BM = par.M();
 	auto const BK = par.K();

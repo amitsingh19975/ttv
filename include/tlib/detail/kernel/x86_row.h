@@ -458,7 +458,7 @@ namespace tlib::simd::x86::avx512{
                 "Your processor does not support AVX512F instruction set"
             );
 
-            __m512 zmm[17], res;
+            __m512d zmm[17], res;
 
             auto k_iter = na[1] / K;
             auto k_rem = na[1] % K;
