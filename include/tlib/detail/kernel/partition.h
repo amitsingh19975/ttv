@@ -4,22 +4,26 @@
 #include <cstddef>
 #include "layout.h"
 #include <type_traits>
+#include "simd_support.h"
 
-namespace tlib::simd{
+namespace tlib::simd::x86{
     
     template<typename,typename>
-    struct x86_partition;
+    struct partition;
 
 } // namespace tlib::simd
 
-namespace tlib::simd{
+namespace tlib::simd::x86{
     
-    template<typename F>
-    struct x86_partition<float,F>{
+    template<typename T, typename F>
+    struct partition{
         using size_type = std::size_t;
-        constexpr x86_partition() = default;
+
+        static constexpr auto min_size = 256 / (8 * sizeof(T));
+
+        constexpr partition() = default;
         
-        constexpr x86_partition(size_type m, size_type k, size_type n)
+        constexpr partition(size_type m, size_type k, size_type n)
         {
             if constexpr( std::is_same_v<F,col_major> ){
                 calc_col(m,n,k);
@@ -51,24 +55,41 @@ namespace tlib::simd{
     private:
 
         inline constexpr void calc_col(size_type m, size_type k, size_type n) noexcept{
-            if( m > 2000 ){
-                auto div_m = m / 4;
-                m_m = std::max( div_m - div_m % 8, 8ul );
-                if( k > 2000 ){
-                    auto div_k = m / 4;
-                    m_k = std::max( div_k - div_k % 8, 8ul );
+            auto div = m / ( min_size );
+            auto temp = std::max( div - div % min_size, min_size );
+            m_m = temp;
+            m_k = temp;
+
+            if( m > k ){
+                if( m > 2000 ){
+                    m_k = min_size;
                 }else{
-                    m_k = 8ul;
+                    m_m = 96ul;
                 }
             }else{
-                auto div_k = m / 4;
-                m_k = std::max( div_k - div_k % 8, 8ul );
-                m_m = 88ul;
+                if( k < 2000 ){
+                    m_k = min_size;
+                }else{
+                    m_m = 96ul;
+                }
             }
+
+
         }
 
         inline constexpr void calc_row(size_type m, size_type k, size_type n) noexcept{
+            auto div_m = m / ( min_size );
+            auto div_k = k / ( min_size );
+            auto temp_k = std::max( div_k - div_k % min_size, min_size );
+            auto temp_m = std::max( div_m - div_m % min_size, min_size );
+            m_m = temp_m;
+            m_k = temp_k;
 
+            if( m > k && m > 2000 ){
+                m_k = min_size;
+            }else if ( m < k && k < 2000){
+                m_k = min_size;
+            }
         }
 
     private:

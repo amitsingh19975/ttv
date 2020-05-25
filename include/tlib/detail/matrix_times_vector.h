@@ -414,6 +414,56 @@ inline void block_mtv_col(ValueType* c, SizeType const* nc, SizeType const* wc,
 
 }
 
+template<typename Kernel, typename Partition, 
+	typename SizeType, typename ValueType
+>
+inline void block_mtv_row(ValueType* c, SizeType const* nc, SizeType const* wc,
+	ValueType const* a, SizeType const* na, SizeType const* wa,
+	ValueType const* b, SizeType const* nb, SizeType const* wb,
+	Kernel ker, Partition par
+) noexcept
+{
+	auto ai = a;
+	auto bi = b;
+	auto ci = c;
+
+	auto const m = na[1];
+	auto const k = na[0];
+	
+	par(m,k,1);
+	auto const BM = par.M();
+	auto const BK = par.K();
+
+	SizeType const wta[] = {1, std::max(wa[0],wa[1])};
+	SizeType const wtb[] = {1, std::max(wb[0],wb[1])};
+	SizeType const wtc[] = {1, std::max(wc[0],wc[1])};
+
+	#pragma omp parallel for schedule(dynamic)
+	for( auto i = 0ul; i < k; i += BK ){
+		auto ib = std::min(k - i, BK);
+
+		auto ak = ai + i * wta[1];
+		auto bk = bi;
+		auto ck = ci + i;
+		for( auto j = 0ul; j < m; j += BM ){
+			auto jb = std::min( m - j, BM );
+
+			SizeType const nta[] = {jb, ib};
+			SizeType const ntb[] = {jb, 1};
+			SizeType const ntc[] = {ib, 1};
+
+			ker(
+				ck, ntc, wc,
+				ak, nta, wa,
+				bk, ntb, wb
+			);
+			ak += wta[0] * jb;
+			bk += jb;
+		}
+	}
+
+}
+
 
 } // namespace tlib::detail
 
