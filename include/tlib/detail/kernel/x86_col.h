@@ -571,7 +571,7 @@ namespace tlib::simd::x86::avx512{
             }
 
             k_iter = k_rem / 4;
-            k_rem = k_rem / 4;
+            k_rem = k_rem % 4;
 
             if( k_iter ){
                 zmm[0] = _mm512_loadu_ps(ak);
@@ -744,7 +744,7 @@ namespace tlib::simd::x86::avx512{
             }
 
             k_iter = k_rem / 2;
-            k_rem = k_rem / 2;
+            k_rem = k_rem % 2;
 
             if( k_iter ){
                 zmm[0] = _mm512_loadu_pd(ak);

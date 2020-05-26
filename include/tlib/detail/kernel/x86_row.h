@@ -458,7 +458,7 @@ namespace tlib::simd::x86::avx512{
                 "Your processor does not support AVX512F instruction set"
             );
 
-            __m512 zmm[17], res;
+            __m512 zmm[32], res;
 
             auto k_iter = na[1] / K;
             auto k_rem = na[1] % K;
@@ -466,90 +466,166 @@ namespace tlib::simd::x86::avx512{
             auto ak = a;
             auto bk = b;
             auto ck = c;
+            
+            __mmask8 mask1 = 0;
+            __mmask16 mask2 = 0;
+            __m512i idx1 = _mm512_set_epi64(2, 3, 0, 1, 6, 7, 4, 5);
+            __m512i idx2 = _mm512_set_epi64(1, 0, 3, 2, 5, 4, 7, 6);
+            __m512i idx3 = _mm512_set_epi32(1, 0, 3, 2, 5 ,4 ,7 ,6 ,9 ,8 , 11, 10, 13, 12 ,15, 14);
 
             res = _mm512_loadu_ps(ck);
 
             while(k_iter--){
-                zmm[0] = _mm512_loadu_ps(ak);
-                zmm[1] = _mm512_loadu_ps(ak + wa[1]);
-                zmm[2] = _mm512_loadu_ps(ak + wa[1] * 2);
-                zmm[3] = _mm512_loadu_ps(ak + wa[1] * 3);
-                zmm[4] = _mm512_loadu_ps(ak + wa[1] * 4);
-                zmm[5] = _mm512_loadu_ps(ak + wa[1] * 5);
-                zmm[6] = _mm512_loadu_ps(ak + wa[1] * 6);
-                zmm[7] = _mm512_loadu_ps(ak + wa[1] * 7);
-                zmm[8] = _mm512_loadu_ps(ak + wa[1] * 8);
-                zmm[9] = _mm512_loadu_ps(ak + wa[1] * 9);
-                zmm[10] = _mm512_loadu_ps(ak + wa[1] * 10);
-                zmm[11] = _mm512_loadu_ps(ak + wa[1] * 11);
-                zmm[12] = _mm512_loadu_ps(ak + wa[1] * 12);
-                zmm[13] = _mm512_loadu_ps(ak + wa[1] * 13);
-                zmm[14] = _mm512_loadu_ps(ak + wa[1] * 14);
-                zmm[15] = _mm512_loadu_ps(ak + wa[1] * 15);
 
-                zmm[16] = _mm512_set1_ps(*bk);
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[0]);
-                res = _mm512_add_ps(zmm[16],res);
+                zmm[0] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 0 + 0 )), _mm256_load_ps( ak + wa[0] * 8 + 0 ),1);
+                zmm[1] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 1 + 0 )), _mm256_load_ps( ak + wa[0] * 9 + 0 ),1);
+                zmm[2] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 2 + 0 )), _mm256_load_ps( ak + wa[0] * 10 + 0 ),1);
+                zmm[3] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 3 + 0 )), _mm256_load_ps( ak + wa[0] * 11 + 0 ),1);
+                zmm[4] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 4 + 0 )), _mm256_load_ps( ak + wa[0] * 12 + 0 ),1);
+                zmm[5] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 5 + 0 )), _mm256_load_ps( ak + wa[0] * 13 + 0 ),1);
+                zmm[6] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 6 + 0 )), _mm256_load_ps( ak + wa[0] * 14 + 0 ),1);
+                zmm[7] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 7 + 0 )), _mm256_load_ps( ak + wa[0] * 15 + 0 ),1);
 
-                zmm[16] = _mm512_set1_ps(*( bk + 1) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[1]);
-                res = _mm512_add_ps(zmm[16],res);
+                zmm[8] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 0 + 8 )), _mm256_load_ps( ak + wa[0] * 8 + 8 ),1);
+                zmm[9] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 1 + 8 )), _mm256_load_ps( ak + wa[0] * 9 + 8 ),1);
+                zmm[10] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 2 + 8 )), _mm256_load_ps( ak + wa[0] * 10 + 8 ),1);
+                zmm[11] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 3 + 8 )), _mm256_load_ps( ak + wa[0] * 11 + 8 ),1);
+                zmm[12] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 4 + 8 )), _mm256_load_ps( ak + wa[0] * 12 + 8 ),1);
+                zmm[13] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 5 + 8 )), _mm256_load_ps( ak + wa[0] * 13 + 8 ),1);
+                zmm[14] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 6 + 8 )), _mm256_load_ps( ak + wa[0] * 14 + 8 ),1);
+                zmm[15] = _mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_load_ps( ak + wa[0] * 7 + 8 )), _mm256_load_ps( ak + wa[0] * 15 + 8 ),1);
 
-                zmm[16] = _mm512_set1_ps(*( bk + 2) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[2]);
-                res = _mm512_add_ps(zmm[16],res);
+                mask1 = 0xcc;
 
-                zmm[16] = _mm512_set1_ps(*( bk + 3) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[3]);
-                res = _mm512_add_ps(zmm[16],res);
+                zmm[16] = _mm512_mask_permutexvar_ps(zmm[0], mask1,idx1,zmm[4]);
+                zmm[17] = _mm512_mask_permutexvar_ps(zmm[1], mask1,idx1,zmm[5]);
+                zmm[18] = _mm512_mask_permutexvar_ps(zmm[2], mask1,idx1,zmm[6]);
+                zmm[19] = _mm512_mask_permutexvar_ps(zmm[3], mask1,idx1,zmm[7]);
+                zmm[20] = _mm512_mask_permutexvar_ps(zmm[8], mask1,idx1,zmm[12]);
+                zmm[21] = _mm512_mask_permutexvar_ps(zmm[9], mask1,idx1,zmm[13]);
+                zmm[22] = _mm512_mask_permutexvar_ps(zmm[10], mask1,idx1,zmm[14]);
+                zmm[23] = _mm512_mask_permutexvar_ps(zmm[11], mask1,idx1,zmm[15]);
 
-                zmm[16] = _mm512_set1_ps(*( bk + 4) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[4]);
-                res = _mm512_add_ps(zmm[16],res);
+                mask1 = 0x33;
 
-                zmm[16] = _mm512_set1_ps(*( bk + 5) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[5]);
-                res = _mm512_add_ps(zmm[16],res);
+                zmm[24] = _mm512_mask_permutexvar_ps(zmm[4], mask1,idx1,zmm[0]);
+                zmm[25] = _mm512_mask_permutexvar_ps(zmm[5], mask1,idx1,zmm[1]);
+                zmm[26] = _mm512_mask_permutexvar_ps(zmm[6], mask1,idx1,zmm[2]);
+                zmm[27] = _mm512_mask_permutexvar_ps(zmm[7], mask1,idx1,zmm[3]);
+                zmm[28] = _mm512_mask_permutexvar_ps(zmm[12], mask1,idx1,zmm[8]);
+                zmm[29] = _mm512_mask_permutexvar_ps(zmm[13], mask1,idx1,zmm[9]);
+                zmm[30] = _mm512_mask_permutexvar_ps(zmm[14], mask1,idx1,zmm[10]);
+                zmm[31] = _mm512_mask_permutexvar_ps(zmm[15], mask1,idx1,zmm[11]);
 
-                zmm[16] = _mm512_set1_ps(*( bk + 6) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[6]);
-                res = _mm512_add_ps(zmm[16],res);
+                mask1 = 0xaa;
 
-                zmm[16] = _mm512_set1_ps(*( bk + 7) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[7]);
-                res = _mm512_add_ps(zmm[16],res);
+                zmm[0] = _mm512_mask_permutexvar_ps(zmm[16], mask1,idx2,zmm[18]);
+                zmm[1] = _mm512_mask_permutexvar_ps(zmm[17], mask1,idx2,zmm[19]);
+                zmm[2] = _mm512_mask_permutexvar_ps(zmm[20], mask1,idx2,zmm[22]);
+                zmm[3] = _mm512_mask_permutexvar_ps(zmm[21], mask1,idx2,zmm[23]);
+                zmm[4] = _mm512_mask_permutexvar_ps(zmm[24], mask1,idx2,zmm[26]);
+                zmm[5] = _mm512_mask_permutexvar_ps(zmm[25], mask1,idx2,zmm[27]);
+                zmm[6] = _mm512_mask_permutexvar_ps(zmm[28], mask1,idx2,zmm[30]);
+                zmm[7] = _mm512_mask_permutexvar_ps(zmm[19], mask1,idx2,zmm[31]);
 
-                zmm[16] = _mm512_set1_ps(*( bk + 8) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[8]);
-                res = _mm512_add_ps(zmm[16],res);
+                mask1 = 0x55;
 
-                zmm[16] = _mm512_set1_ps(*( bk + 9) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[9]);
-                res = _mm512_add_ps(zmm[16],res);
+                zmm[8] = _mm512_mask_permutexvar_ps(zmm[18], mask1,idx2,zmm[16]);
+                zmm[9] = _mm512_mask_permutexvar_ps(zmm[19], mask1,idx2,zmm[17]);
+                zmm[10] = _mm512_mask_permutexvar_ps(zmm[22], mask1,idx2,zmm[20]);
+                zmm[11] = _mm512_mask_permutexvar_ps(zmm[23], mask1,idx2,zmm[21]);
+                zmm[12] = _mm512_mask_permutexvar_ps(zmm[26], mask1,idx2,zmm[24]);
+                zmm[13] = _mm512_mask_permutexvar_ps(zmm[27], mask1,idx2,zmm[25]);
+                zmm[14] = _mm512_mask_permutexvar_ps(zmm[30], mask1,idx2,zmm[28]);
+                zmm[15] = _mm512_mask_permutexvar_ps(zmm[31], mask1,idx2,zmm[19]);
 
-                zmm[16] = _mm512_set1_ps(*( bk + 10) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[10]);
-                res = _mm512_add_ps(zmm[16],res);
 
-                zmm[16] = _mm512_set1_ps(*( bk + 11) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[11]);
-                res = _mm512_add_ps(zmm[16],res);
+                mask2 = 0xaaaa;
 
-                zmm[16] = _mm512_set1_ps(*( bk + 12) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[12]);
-                res = _mm512_add_ps(zmm[16],res);
+                zmm[16] = _mm512_mask_permutexvar_ps(zmm[0], mask2,idx3,zmm[1]);
+                zmm[17] = _mm512_mask_permutexvar_ps(zmm[2], mask2,idx3,zmm[3]);
+                zmm[18] = _mm512_mask_permutexvar_ps(zmm[4], mask2,idx3,zmm[5]);
+                zmm[19] = _mm512_mask_permutexvar_ps(zmm[6], mask2,idx3,zmm[7]);
+                zmm[20] = _mm512_mask_permutexvar_ps(zmm[8], mask2,idx3,zmm[9]);
+                zmm[21] = _mm512_mask_permutexvar_ps(zmm[10], mask2,idx3,zmm[11]);
+                zmm[22] = _mm512_mask_permutexvar_ps(zmm[12], mask2,idx3,zmm[13]);
+                zmm[23] = _mm512_mask_permutexvar_ps(zmm[14], mask2,idx3,zmm[15]);
 
-                zmm[16] = _mm512_set1_ps(*( bk + 13) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[13]);
-                res = _mm512_add_ps(zmm[16],res);
+                mask2 = 0xaaaa;
 
-                zmm[16] = _mm512_set1_ps(*( bk + 14) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[14]);
-                res = _mm512_add_ps(zmm[16],res);
+                zmm[24] = _mm512_mask_permutexvar_ps(zmm[1], mask2,idx3,zmm[0]);
+                zmm[25] = _mm512_mask_permutexvar_ps(zmm[3], mask2,idx3,zmm[2]);
+                zmm[26] = _mm512_mask_permutexvar_ps(zmm[5], mask2,idx3,zmm[4]);
+                zmm[27] = _mm512_mask_permutexvar_ps(zmm[7], mask2,idx3,zmm[6]);
+                zmm[28] = _mm512_mask_permutexvar_ps(zmm[9], mask2,idx3,zmm[8]);
+                zmm[29] = _mm512_mask_permutexvar_ps(zmm[11], mask2,idx3,zmm[10]);
+                zmm[30] = _mm512_mask_permutexvar_ps(zmm[13], mask2,idx3,zmm[12]);
+                zmm[31] = _mm512_mask_permutexvar_ps(zmm[15], mask2,idx3,zmm[14]);
 
-                zmm[16] = _mm512_set1_ps(*( bk + 15) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[15]);
-                res = _mm512_add_ps(zmm[16],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 0));
+                zmm[1] = _mm512_mul_ps(zmm[16],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 1));
+                zmm[1] = _mm512_mul_ps(zmm[17],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 2));
+                zmm[1] = _mm512_mul_ps(zmm[18],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 3));
+                zmm[1] = _mm512_mul_ps(zmm[19],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 4));
+                zmm[1] = _mm512_mul_ps(zmm[20],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 5));
+                zmm[1] = _mm512_mul_ps(zmm[21],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 6));
+                zmm[1] = _mm512_mul_ps(zmm[22],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 7));
+                zmm[1] = _mm512_mul_ps(zmm[23],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 8));
+                zmm[1] = _mm512_mul_ps(zmm[24],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 9));
+                zmm[1] = _mm512_mul_ps(zmm[25],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 10));
+                zmm[1] = _mm512_mul_ps(zmm[26],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 11));
+                zmm[1] = _mm512_mul_ps(zmm[27],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 12));
+                zmm[1] = _mm512_mul_ps(zmm[28],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 13));
+                zmm[1] = _mm512_mul_ps(zmm[29],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 14));
+                zmm[1] = _mm512_mul_ps(zmm[30],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
+
+                zmm[0] = _mm512_set1_ps(*(bk + 15));
+                zmm[1] = _mm512_mul_ps(zmm[31],zmm[0]);
+                res = _mm512_add_ps(zmm[1],res);
 
                 ak += wa[1] * 16;
                 bk += 16;
@@ -559,119 +635,43 @@ namespace tlib::simd::x86::avx512{
             k_rem = k_rem % 8;
 
             if( k_iter ){
-                zmm[0] = _mm512_loadu_ps(ak);
-                zmm[1] = _mm512_loadu_ps(ak + wa[1]);
-                zmm[2] = _mm512_loadu_ps(ak + wa[1] * 2);
-                zmm[3] = _mm512_loadu_ps(ak + wa[1] * 3);
-                zmm[4] = _mm512_loadu_ps(ak + wa[1] * 4);
-                zmm[5] = _mm512_loadu_ps(ak + wa[1] * 5);
-                zmm[6] = _mm512_loadu_ps(ak + wa[1] * 6);
-                zmm[7] = _mm512_loadu_ps(ak + wa[1] * 7);
-
-                zmm[16] = _mm512_set1_ps(*bk);
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[0]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 1) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[1]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 2) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[2]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 3) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[3]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 4) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[4]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 5) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[5]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 6) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[6]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 7) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[7]);
-                res = _mm512_add_ps(zmm[16],res);
+                
+                //TODO: implement avx512 8x8
 
                 ak += wa[1] * 8;
                 bk += 8;
             }
 
             k_iter = k_rem / 4;
-            k_rem = k_rem / 4;
+            k_rem = k_rem % 4;
 
             if( k_iter ){
-                zmm[0] = _mm512_loadu_ps(ak);
-                zmm[1] = _mm512_loadu_ps(ak + wa[1]);
-                zmm[2] = _mm512_loadu_ps(ak + wa[1] * 2);
-                zmm[3] = _mm512_loadu_ps(ak + wa[1] * 3);
-
-                zmm[16] = _mm512_set1_ps(*bk);
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[0]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 1) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[1]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 2) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[2]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 3) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[3]);
-                res = _mm512_add_ps(zmm[16],res);
+                
+                //TODO: implement avx512 4x4
 
                 ak += wa[1] * 4;
                 bk += 4;
             }
 
-            if( k_rem == 1 ){
-                zmm[0] = _mm512_loadu_ps(ak);
-                
-                zmm[16] = _mm512_set1_ps(*bk);
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[0]);
-                res = _mm512_add_ps(zmm[16],res);
-
-            }else if ( k_rem == 2 ){
-
-                zmm[0] = _mm512_loadu_ps(ak);
-                zmm[1] = _mm512_loadu_ps(ak + wa[1]);
-                
-                zmm[16] = _mm512_set1_ps(*bk);
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[0]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 1) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[1]);
-                res = _mm512_add_ps(zmm[16],res);
-
-            }else if ( k_rem == 3 ){
-                zmm[0] = _mm512_loadu_ps(ak);
-                zmm[1] = _mm512_loadu_ps(ak + wa[1]);
-                zmm[2] = _mm512_loadu_ps(ak + wa[1] * 2);
-
-                zmm[16] = _mm512_set1_ps(*bk);
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[0]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 1) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[1]);
-                res = _mm512_add_ps(zmm[16],res);
-
-                zmm[16] = _mm512_set1_ps(*( bk + 2) );
-                zmm[16] = _mm512_mul_ps(zmm[16],zmm[2]);
-                res = _mm512_add_ps(zmm[16],res);
-            }
 
             _mm512_storeu_ps(ck,res);
+
+            float sum = 0;
+            #pragma omp simd reduction(+:sum)
+            for(auto i = 0ul; i < M; ++i){
+                auto aj = ak;
+                auto bj = bk;
+                auto cj = ck;
+                for( auto j = 0ul; j < k_rem; ++j ){
+                    sum += *aj * *bj;
+                    ++aj;
+                    ++bj;
+                }
+                *ck += sum;
+                sum = 0;
+                ak += wa[0];
+                ++ck;
+            }
 
         }
     };
@@ -778,7 +778,7 @@ namespace tlib::simd::x86::avx512{
             }
 
             k_iter = k_rem / 2;
-            k_rem = k_rem / 2;
+            k_rem = k_rem % 2;
 
             if( k_iter ){
                 zmm[0] = _mm512_loadu_pd(ak);
