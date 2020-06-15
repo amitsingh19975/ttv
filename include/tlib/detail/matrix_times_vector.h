@@ -12,6 +12,7 @@
 #include "tags.h"
 #include "cases.h"
 #include "kernel/x86.h"
+#include "kernel/default.h"
 #include "kernel/partition.h"
 
 

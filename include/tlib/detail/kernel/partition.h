@@ -21,7 +21,7 @@ namespace tlib::simd::x86{
         using size_type = std::size_t;
 
         static constexpr auto const data_size = ( 8 * sizeof(T) );
-        static constexpr auto const L1_cache = 32768 * 64 / data_size;
+        static constexpr auto const L1_cache = ( 32768 * 1000 * 2 ) / data_size;
 
         constexpr partition() = default;
         
@@ -68,11 +68,11 @@ namespace tlib::simd::x86{
                 detail::simd_config::avx512dq ||
                 detail::simd_config::avx512vl 
             ){
-                if( sz <= d512 ){
+                if( sz < d512 ){
                     if constexpr ( detail::simd_config::avx ||
                         detail::simd_config::avx2
                     ){
-                        return sz <= d256 ? d128 : d256;
+                        return sz < d256 ? d128 : d256;
                     }else{
                         return d128;
                     }
@@ -83,7 +83,7 @@ namespace tlib::simd::x86{
                 if constexpr ( detail::simd_config::avx ||
                     detail::simd_config::avx2
                 ){
-                    return sz <= d256 ? d128 : d256;
+                    return sz < d256 ? d128 : d256;
                 }else{
                     return d128;
                 }
@@ -98,15 +98,11 @@ namespace tlib::simd::x86{
             auto div_k = k / ( k_min );
             auto temp_k = std::max( div_k - div_k % k_min, k_min );
             auto temp_m = std::max( div_m - div_m % m_min, m_min );
+            m_m = temp_m;
+            m_k = m_min;
+            
             if( m * k > L1_cache ){
-                m_m = temp_m;
-                m_k = m > 2000ul ? m_min / 2ul : m_min;
-            }else{
-                std::size_t m_ltemp = std::sqrt( L1_cache );
-                auto m_l = std::max( m_ltemp - (m_ltemp % m_min), temp_m);
-                auto k_l = std::max( m_ltemp - (m_ltemp % k_min), temp_k);
-                m_m = m_l;
-                m_k = k_l;
+                m_k = m_min / 2ul;
             }
         }
 
@@ -118,15 +114,12 @@ namespace tlib::simd::x86{
             auto div_k = k/ ( k_min );
             auto temp_k = std::max( div_k - div_k % k_min, k_min );
             auto temp_m = std::max( div_m - div_m % m_min, m_min );
-            std::size_t m_ltemp = std::sqrt( L1_cache );
+            m_m = temp_m * 2ul;
+            m_k = temp_k / 2ul;
+                
             if( m * k > L1_cache ){
                 m_m = temp_m;
-                m_k = m > 2000ul ? m_min / 2ul : m_min;
-            }else{
-                auto m_l = std::max( m_ltemp - (m_ltemp % m_min), temp_m);
-                auto k_l = std::max( m_ltemp - (m_ltemp % k_min), temp_k);
-                m_m = m_l;
-                m_k = k_l;
+                m_k = k_min;
             }
         }
 
