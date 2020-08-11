@@ -9,19 +9,20 @@
 
 namespace tlib::simd::x86{
     
-    template<typename,typename>
+    template<typename,typename,std::size_t,std::size_t>
     struct partition;
 
 } // namespace tlib::simd
 
 namespace tlib::simd::x86{
     
-    template<typename T, typename F>
+    template<typename T, typename F, std::size_t L1Cache = 32ul /* size in Kb */, std::size_t L2Cache = 256ul /* size in Kb */>
     struct partition{
         using size_type = std::size_t;
 
-        static constexpr auto const data_size = ( 8 * sizeof(T) );
-        static constexpr auto const L1_cache = ( 32768 * 1000 * 2 ) / data_size;
+        static constexpr auto const number_of_ways = 4ul;
+        static constexpr auto const data_size = sizeof(T);
+        static constexpr auto const critical_stride = ( L2Cache * 1024ul ) / ( number_of_ways );
 
         constexpr partition() = default;
         
@@ -57,10 +58,9 @@ namespace tlib::simd::x86{
     private:
 
         inline constexpr size_t best_min_size(size_t sz) const noexcept{
-            constexpr auto data_size = 8 * sizeof(T);
-            constexpr auto d512 = 512ul / data_size;
-            constexpr auto d256 = 256ul / data_size;
-            constexpr auto d128 = 128ul / data_size;
+            constexpr auto d512 = 512ul / L1Cache;
+            constexpr auto d256 = 256ul / L1Cache;
+            constexpr auto d128 = 128ul / L1Cache;
 
             if constexpr( detail::simd_config::avx512f || 
                 detail::simd_config::avx512bw ||
@@ -99,11 +99,13 @@ namespace tlib::simd::x86{
             auto temp_k = std::max( div_k - div_k % k_min, k_min );
             auto temp_m = std::max( div_m - div_m % m_min, m_min );
             m_m = temp_m;
-            m_k = m_min;
-            
-            if( m * k > L1_cache ){
-                m_k = m_min / 2ul;
+            m_k = temp_k;
+            auto total_size = ( m * k * data_size ) / ( 1024ul );
+
+            if( total_size >= critical_stride ){
+                m_k = k_min;
             }
+
         }
 
         inline constexpr void calc_row(size_type m, size_type k, size_type n) noexcept{
@@ -111,14 +113,15 @@ namespace tlib::simd::x86{
             auto const m_min = best_min_size(m);
 
             auto div_m = m / ( m_min );
-            auto div_k = k/ ( k_min );
+            auto div_k = k / ( k_min );
             auto temp_k = std::max( div_k - div_k % k_min, k_min );
             auto temp_m = std::max( div_m - div_m % m_min, m_min );
-            m_m = temp_m * 2ul;
+            m_m = temp_m * m_min;
             m_k = temp_k / 2ul;
-                
-            if( m * k > L1_cache ){
-                m_m = temp_m;
+            auto total_size = ( m * k * data_size ) / ( 1024ul );
+
+            if( total_size >= critical_stride ){
+                m_m = m_min;
                 m_k = k_min;
             }
         }
